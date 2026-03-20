@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 
-// BOTUN TOKENİ (DOKUNMA)
+// BOTUN ANAHTARI (TOKEN)
 const TOKEN = "MTQ4NDU2MjQzNTQ1MjE3NDQwNw.GHQpv-.CaWGuyZeTkMnWdLQFionfrpQQnQgg9A6-EPb1Y";
 
 const client = new Client({
@@ -12,51 +12,45 @@ const client = new Client({
   ]
 });
 
-const ihlaller = new Map();
-
 client.once('ready', () => {
-  console.log(`🚀 MUHAFIZ AKTİF: ${client.user.tag}`);
+  console.log(`✅ BOT HAZIR: ${client.user.tag} adıyla giriş yapıldı!`);
 });
 
-client.on('messageCreate', async (msg) => {
-  if (msg.author.bot || !msg.guild) return;
-  if (msg.author.id === msg.guild.ownerId) return;
+client.on('messageCreate', async (mesaj) => {
+  if (mesaj.author.bot || !mesaj.guild) return;
 
-  const satirlar = msg.content.split('\n').length;
-  const linkRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|(\.(com|net|org|xyz|info|me|io|tk|ml|ga|cf|gq|biz|tr))/gi;
-  const linkVarMi = linkRegex.test(msg.content);
+  // --- KOMUTLAR ---
 
-  // Satır Spam Koruması
-  if (satirlar > 35) {
-    try {
-      await msg.delete();
-      return msg.channel.send(`⚠️ <@${msg.author.id}>, çok fazla satır kullandın!`).then(m => setTimeout(() => m.delete(), 5000));
-    } catch (e) { console.log(e); }
+  // Yardım Komutu
+  if (mesaj.content === '!yardım') {
+    mesaj.reply('🛡️ **Vebal Muhafız Komutları:**\n\n`!temizle [sayı]` - Belirtilen miktarda mesajı siler.\n`!sa` - Selam verir.');
   }
 
-  // Link ve Panel Koruması
-  if (linkVarMi) {
-    const userIhlal = ihlaller.get(msg.author.id) || 0;
-    if (userIhlal === 0) {
-      ihlaller.set(msg.author.id, 1);
-      try {
-        await msg.delete();
-        msg.channel.send(`⚠️ <@${msg.author.id}>, link paylaşımı yasaktır! Tekrarında susturulacaksın.`).then(m => setTimeout(() => m.delete(), 5000));
-      } catch (e) { console.log(e); }
-      setTimeout(() => ihlaller.delete(msg.author.id), 300000);
-    } else {
-      try {
-        await msg.delete();
-        const member = msg.guild.members.cache.get(msg.author.id);
-        if (member) {
-          await member.timeout(600000, "Sürekli Link Paylaşımı");
-          msg.channel.send(`🚫 <@${msg.author.id}>, susturuldun!`);
-        }
-        ihlaller.delete(msg.author.id);
-      } catch (err) { console.log(err); }
-    }
+  // Selamlaşma Komutu
+  if (mesaj.content.toLowerCase() === '!sa' || mesaj.content.toLowerCase() === 'sa') {
+    mesaj.reply('Aleyküm Selam hoş geldin kral!');
+  }
+
+  // Mesaj Silme Komutu
+  if (mesaj.content.startsWith('!temizle')) {
+    if (!mesaj.member.permissions.has('ManageMessages')) return mesaj.reply('Buna yetkin yok reis.');
+    const miktar = parseInt(mesaj.content.split(' ')[1]);
+    if (!miktar || miktar < 1 || miktar > 100) return mesaj.reply('Lütfen 1-100 arası bir sayı yaz.');
+    
+    await mesaj.channel.bulkDelete(miktar, true);
+    mesaj.channel.send(`✅ ${miktar} adet mesaj süpürüldü!`).then(m => setTimeout(() => m.delete(), 3000));
+  }
+
+  // --- OTOMATİK KORUMALAR ---
+
+  // Link Engelleme
+  const linkKontrol = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+  if (linkKontrol.test(mesaj.content) && mesaj.author.id !== mesaj.guild.ownerId) {
+    try {
+      await mesaj.delete();
+      mesaj.channel.send(`⚠️ <@${mesaj.author.id}>, bu sunucuda link paylaşmak yasaktır!`).then(m => setTimeout(() => m.delete(), 5000));
+    } catch (hata) { console.log("Mesaj silinemedi."); }
   }
 });
 
 client.login(TOKEN);
-
