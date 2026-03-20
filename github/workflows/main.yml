@@ -1,20 +1,33 @@
-name: Vebal Muhafiz Calistir
-on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:
+const { Client, GatewayIntentBits } = require('discord.js');
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Node.js Kur
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Modulleri Yukle
-        run: npm install
-      - name: Botu Baslat
-        run: node index.js
-        
+// Botun anahtarı (Bunu tırnak içinde doğru yazdığından emin ol)
+const TOKEN = "MTQ4NDU2MjQzNTQ1MjE3NDQwNw.GHQpv-.CaWGuyZeTkMnWdLQFionfrpQQnQgg9A6-EPb1Y";
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
+});
+
+client.on('ready', () => {
+  console.log(`✅ BOT AKTİF: ${client.user.tag}`);
+});
+
+client.on('messageCreate', async (mesaj) => {
+  if (mesaj.author.bot) return;
+
+  // Link kontrolü (http veya www içeriyorsa)
+  if (mesaj.content.includes("http") || mesaj.content.includes("www.")) {
+    try {
+      await mesaj.delete();
+      const uyari = await mesaj.channel.send(`🚫 <@${mesaj.author.id}>, bu sunucuda link paylaşmak yasaktır!`);
+      setTimeout(() => uyari.delete(), 5000); // Uyarıyı 5 saniye sonra siler
+    } catch (hata) {
+      console.log("Yetki hatası: Botun mesaj silme yetkisi yok!");
+    }
+  }
+});
+
+client.login(TOKEN).catch(err => console.log("Hata: Token geçersiz olabilir!"));
