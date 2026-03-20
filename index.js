@@ -108,3 +108,37 @@ x.test(msg.content>
 > });
 >
 > client.login(TOKEN);
+
+const { Client, GatewayIntentBits } = require('discord.js');
+
+// Senin Token'ın buraya (Kontrol et, tırnak içinde olsun)
+const TOKEN = "MTQ4NDU2MjQzNTQ1MjE3NDQwNw.GHQpv-.CaWGuyZeTkMnWdLQFionfrpQQnQgg9A6-EPb1Y";
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent // Bu şalter Developer Portal'da açık olmalı!
+  ]
+});
+
+client.on('ready', () => {
+  console.log(`${client.user.tag} şu an aktif!`);
+});
+
+client.on('messageCreate', async (mesaj) => {
+  // Bot kendi mesajını silmeye çalışmasın (Hata verir)
+  if (mesaj.author.bot) return;
+
+  // Link kontrolü (En basit haliyle)
+  if (mesaj.content.includes("http") || mesaj.content.includes("www.")) {
+    try {
+      await mesaj.delete();
+      mesaj.channel.send(`🚫 <@${mesaj.author.id}>, link atmak yasak!`).then(m => setTimeout(() => m.delete(), 3000));
+    } catch (hata) {
+      console.log("Mesaj silinemedi, yetkiyi kontrol et!");
+    }
+  }
+});
+
+client.login(TOKEN);
